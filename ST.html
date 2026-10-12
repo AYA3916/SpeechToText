@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#101522" />
+  <title>Voice Notes · Speech to Text</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #101522;
+      color: #f3f5fb;
+      font-synthesis: none;
+    }
+    * { box-sizing: border-box; }
+    body {
+      min-height: 100vh;
+      margin: 0;
+      padding: 48px 20px;
+      background: radial-gradient(ellipse at 50% -15%, #29355a 0, #101522 52%);
+    }
+    button, select { font: inherit; }
+    .shell { width: min(760px, 100%); margin: 0 auto; }
+    .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 28px; }
+    .brand-mark {
+      display: grid; place-items: center; width: 42px; height: 42px;
+      border: 1px solid #5264a0; border-radius: 14px; background: #202b49; font-size: 21px;
+    }
+    .eyebrow { margin: 0 0 3px; color: #a9b5d6; font-size: 12px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
+    h1 { margin: 0; font-size: 22px; letter-spacing: -.03em; }
+    .card { overflow: hidden; border: 1px solid #2a3348; border-radius: 22px; background: #171e2d; box-shadow: 0 24px 70px #05081166; }
+    .toolbar { display: flex; flex-wrap: wrap; align-items: end; gap: 14px; padding: 22px 24px; border-bottom: 1px solid #2a3348; }
+    .language { display: grid; gap: 8px; min-width: 190px; margin-right: auto; }
+    label { color: #a9b5d6; font-size: 12px; font-weight: 650; }
+    select {
+      min-height: 42px; padding: 0 36px 0 12px; border: 1px solid #39445d; border-radius: 11px;
+      color: #f3f5fb; background: #111827;
+    }
+    button { min-height: 42px; padding: 0 16px; border: 1px solid transparent; border-radius: 11px; cursor: pointer; font-weight: 700; transition: .16s ease; }
+    button:focus-visible, select:focus-visible { outline: 3px solid #9caeff; outline-offset: 2px; }
+    button:disabled, select:disabled { cursor: not-allowed; opacity: .48; }
+    .primary { color: #101522; background: #b6c2ff; }
+    .primary:hover:not(:disabled) { background: #d0d8ff; transform: translateY(-1px); }
+    .secondary { border-color: #39445d; color: #e5e9f5; background: #222b3d; }
+    .secondary:hover:not(:disabled) { background: #2d3850; }
+    .status-row { display: flex; align-items: center; gap: 10px; min-height: 56px; padding: 0 24px; color: #b7c0d5; font-size: 13px; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #77839e; }
+    .status-row[data-state="listening"] .dot { background: #ff6b82; box-shadow: 0 0 0 5px #ff6b8222; animation: pulse 1.5s infinite; }
+    .status-row[data-state="error"] { color: #ffb2bd; }
+    @keyframes pulse { 50% { box-shadow: 0 0 0 9px #ff6b8200; } }
+    .transcript-wrap { padding: 24px; }
+    .transcript-head { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 14px; }
+    .transcript-head h2 { margin: 0; font-size: 14px; }
+    .actions { display: flex; gap: 8px; }
+    .small { min-height: 34px; padding: 0 11px; border-color: #39445d; color: #bdc7dc; background: transparent; font-size: 12px; }
+    .transcript {
+      min-height: 250px; max-height: 48vh; overflow: auto; padding: 18px; border: 1px solid #2a3348;
+      border-radius: 14px; background: #111724; color: #f4f6fb; font-size: 17px; line-height: 1.75;
+      white-space: pre-wrap; overflow-wrap: anywhere;
+    }
+    .transcript:empty::before { content: "Your recognized speech will appear here…"; color: #737f99; }
+    .interim { color: #8e9ab3; }
+    .footer { display: flex; justify-content: space-between; gap: 12px; padding-top: 13px; color: #8390aa; font-size: 12px; }
+    .notice { margin: 16px 4px 0; color: #929eb6; font-size: 12px; line-height: 1.6; }
+    .notice strong { color: #c5cde0; }
+    @media (max-width: 560px) {
+      body { padding: 28px 14px; }
+      .toolbar { align-items: stretch; padding: 18px; }
+      .language { width: 100%; }
+      .toolbar button { flex: 1; }
+      .transcript-wrap { padding: 18px; }
+      .transcript { min-height: 220px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="brand">
+      <div class="brand-mark" aria-hidden="true">🎙</div>
+      <div><p class="eyebrow">Voice Notes</p><h1>Speech to text</h1></div>
+    </header>
+
+    <section class="card" aria-label="Speech transcription">
+      <div class="toolbar">
+        <div class="language">
+          <label for="language">Recognition language</label>
+          <select id="language">
+            <option value="ar" selected>Arabic</option>
+            <option value="ar-MA">Moroccan Arabic · Darija</option>
+            <option value="en-US">English · United States</option>
+            <option value="en-GB">English · United Kingdom</option>
+            <option value="es-ES">Spanish</option>
+            <option value="fr-FR">French</option>
+          </select>
+        </div>
+        <button id="startBtn" class="primary" type="button">Start listening</button>
+        <button id="stopBtn" class="secondary" type="button" disabled>Stop</button>
+      </div>
+
+      <div id="statusRow" class="status-row" data-state="ready" role="status" aria-live="polite">
+        <span class="dot" aria-hidden="true"></span><span id="status">Ready when you are.</span>
+      </div>
+
+      <div class="transcript-wrap">
+        <div class="transcript-head">
+          <h2>Transcript</h2>
+          <div class="actions">
+            <button id="copyBtn" class="small" type="button" disabled>Copy</button>
+            <button id="clearBtn" class="small" type="button" disabled>Clear</button>
+          </div>
+        </div>
+        <div id="text" class="transcript" aria-live="polite" aria-relevant="additions text"></div>
+        <div class="footer"><span id="wordCount">0 words</span><span id="charCount">0 characters</span></div>
+      </div>
+    </section>
+    <p class="notice"><strong>Microphone access:</strong> allow the browser to use your microphone when prompted. Speech recognition needs a supported browser and recognition service. If you opened this file directly and it fails, run it from <code>localhost</code> or an HTTPS site in Chrome or Edge.</p>
+  </main>
+  <script src="ST.js" defer></script>
+</body>
+</html>
